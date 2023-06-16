@@ -1,0 +1,6 @@
+{
+    "imports": {
+        "oak": "https://deno.land/x/oak@v7.3.0/mod.ts",
+        "view_engine": "https://deno.land/x/view_engine@v1.3.0/mod.ts"
+    }
+}
