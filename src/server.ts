@@ -1,16 +1,30 @@
-import { getEthereumPrice } from './ethereum.js';
-import oak from 'oak';
-import view_engine from 'view_engine';
+import { getEthereumPrice } from "./ethereum.ts";
 
-const ejsEngine = oak.engineFactory.getEjsEngine();
-const oakAdapter = oak.adapterFactory.getOakAdapter();
-let data = await getEthereumPrice();
-let ethText: string = data[0] + ':' + data[1];
-const app = new view_engine.Application();
-app.use(view_engine.viewEngine(oakAdapter, ejsEngine));
-app.use(
-    async (ctx, next) => {
-        ctx.render('index.ejs', {data: {msg: ethText}});
+const server = Deno.listen({ port: 8080 });
+
+for await (const requestEvent of server) {
+  serveHTTP(requestEvent);
+}
+
+async function serveHTTP(conn: Deno.Conn) {
+  const httpConn = Deno.serveHttp(conn);
+  for await (const requestEvent of httpConn) {
+    const url = new URL(requestEvent.request.url);
+    if (url.pathname === "/") {
+      const ethereumPrice = await getEthereumPrice();
+
+      requestEvent.respondWith(
+        new Response(JSON.stringify(ethereumPrice), {
+          headers: { "content-type": "text/html" },
+        }),
+      );
+    } else {
+      requestEvent.respondWith(
+        new Response(JSON.stringify({ error: "Not found" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        }),
+      );
     }
-);
-await app.listen({port: 8000});
+  }
+}
